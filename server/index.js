@@ -9,14 +9,14 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 
-// TODO: connect mongoose
+
 connectDB();
 
 // middleware 
-app.use(cors())
+app.use(cors());
 app.use(express.json())
 
-// TODO: Apply Routes
+// Use job routes
 app.use("/api/jobs", jobRoutes);
 
 

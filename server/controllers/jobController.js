@@ -6,7 +6,7 @@ const mockUserId = "123456";
 export const getJobs = async (req, res) => {
   try {
     const jobs = await Job.find({ userId: mockUserId });
-    res.json(jobs);
+    res.json(jobs)
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
