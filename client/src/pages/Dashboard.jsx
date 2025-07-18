@@ -40,7 +40,7 @@ export default function Dashboard() {
 
       {/* main grid: jobs list + notes */}
       <div className="grid lg:grid-cols-[1fr_350px] gap-6">
-        <JobList />
+        <JobList setStats={setStats} />
         <NotesPanel />
       </div>
     </section>

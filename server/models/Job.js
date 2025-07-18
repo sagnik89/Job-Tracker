@@ -25,11 +25,6 @@ const jobSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+}, {timestamps: true});
 
 export default mongoose.model("Job", jobSchema);
