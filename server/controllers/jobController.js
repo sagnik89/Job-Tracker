@@ -1,23 +1,30 @@
-import Job from "../models/Job.js";
+import { Job } from "../models/jobModel.js";
 
-// Mocked userId for now
-const mockUserId = "123456";
 
+// gets all the job of the specifc user
 export const getJobs = async (req, res) => {
+  const currentUserId = req.user.userId; 
   try {
-    const jobs = await Job.find({ userId: mockUserId });
-    res.json(jobs)
+    const jobs = await Job.find({ userId: currentUserId });
+
+    if (!jobs) {
+      return res.status(200).json({ message: "No jobs yet !" });
+    }
+
+    res.status(200).json(jobs);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
+// creates a job for the specific user
 export const createJob = async (req, res) => {
   const { company, position, location, status, notes, appliedOn } = req.body;
+  const currentUserId = req.user.userId; 
 
   try {
-    const newJob = new Job({
-      userId: mockUserId,
+    const newJob = await Job.create({
+      userId: currentUserId,
       company,
       position,
       location,
@@ -26,56 +33,70 @@ export const createJob = async (req, res) => {
       appliedOn,
     });
 
-    const savedJob = await newJob.save();
-    res.status(201).json(savedJob);
+    res.status(201).json({
+      message: "Job created successfully",
+      job: newJob,
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(500).json({ error: ["Internal Server Error", err.message] });
   }
 };
 
+// updates a job
 export const updateJob = async (req, res) => {
+  const currentUserId = req.user.userId; 
+
   const { id } = req.params;
   const updates = req.body;
 
   try {
     const updatedJob = await Job.findOneAndUpdate(
-      { _id: id, userId: mockUserId },
+      { _id: id, userId: currentUserId },
       updates,
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!updatedJob) {
-      return res.status(404).json({ message: "Job not found" });
+      return res.status(404).json({ error: "Job not found" });
     }
 
-    res.json(updatedJob);
+    res.status(200).json({
+      message: "Job updated successfully",
+      job: updatedJob,
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
+// delete a specific job
 export const deleteJob = async (req, res) => {
+  const currentUserId = req.user._id; 
+
   const { id } = req.params;
 
   try {
     const deletedJob = await Job.findOneAndDelete({
       _id: id,
-      userId: mockUserId,
+      userId: currentUserId,
     });
 
     if (!deletedJob) {
-      return res.status(404).json({ message: "Job not found" });
+      return res.status(404).json({ error: "Job not found" });
     }
 
-    res.json({ message: "Job deleted successfully" });
+    res.status(200).json({ message: "Job deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
+// get job stats for a specific user
 export const getJobStats = async (req, res) => {
+  const currentUserId = req.user._id; 
+
   try {
-    const userId = mockUserId;
+    const userId = currentUserId;
 
     const totalJobs = await Job.countDocuments({ userId });
 
@@ -114,12 +135,12 @@ export const getJobStats = async (req, res) => {
       statusMap[stat._id] = stat.count;
     });
 
-    res.json({
+    res.status(200).json({
       totalJobs,
       statusBreakdown: statusMap,
       conversionRates: conversions,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
