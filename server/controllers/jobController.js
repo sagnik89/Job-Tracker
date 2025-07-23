@@ -1,4 +1,5 @@
 import { Job } from "../models/jobModel.js";
+import mongoose from "mongoose";
 
 
 // gets all the job of the specifc user
@@ -71,7 +72,7 @@ export const updateJob = async (req, res) => {
 
 // delete a specific job
 export const deleteJob = async (req, res) => {
-  const currentUserId = req.user._id; 
+  const currentUserId = req.user.userId; 
 
   const { id } = req.params;
 
@@ -93,7 +94,7 @@ export const deleteJob = async (req, res) => {
 
 // get job stats for a specific user
 export const getJobStats = async (req, res) => {
-  const currentUserId = req.user._id; 
+  const currentUserId = req.user.userId; 
 
   try {
     const userId = currentUserId;
@@ -101,7 +102,7 @@ export const getJobStats = async (req, res) => {
     const totalJobs = await Job.countDocuments({ userId });
 
     const statusCounts = await Job.aggregate([
-      { $match: { userId } },
+      { $match: { userId: new mongoose.Types.ObjectId(String(userId)) } },
       {
         $group: {
           _id: "$status",
@@ -117,6 +118,10 @@ export const getJobStats = async (req, res) => {
       Rejected: 0,
     };
 
+    statusCounts.forEach((stat) => {
+      statusMap[stat._id] = stat.count;
+    });
+
     const applied = statusMap.Applied || 0;
     const interviewing = statusMap.Interviewing || 0;
     const offer = statusMap.Offer || 0;
@@ -131,16 +136,13 @@ export const getJobStats = async (req, res) => {
       appliedToOffer: applied ? ((offer / applied) * 100).toFixed(1) : "0.0",
     };
 
-    statusCounts.forEach((stat) => {
-      statusMap[stat._id] = stat.count;
-    });
-
+ 
     res.status(200).json({
       totalJobs,
       statusBreakdown: statusMap,
       conversionRates: conversions,
     });
   } catch (err) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: ["Internal Server Error", err.message] });
   }
 };
